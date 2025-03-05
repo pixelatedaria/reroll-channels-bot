@@ -1,4 +1,4 @@
-const { Client, GatewayIntentBits } = require("discord.js");
+const { Client, GatewayIntentBits, SlashCommandBuilder } = require("discord.js");
 const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
 const fs = require("fs");
 
@@ -15,12 +15,16 @@ const ids = [
     "1345945959498121268"
 ];
 
+const allowedUsers = [
+    "1274838852967731224",
+    "1274838039499112520"
+]
 let timer = 60 * 10;
 let prev = -1;
 let r = 1;
 
 client.on("ready", async () => {
-    console.log(`Logged in as ${client.user.tag}`);
+    console.log(`Logged in as ${client.user.tag} with ID: ${client.user.id}`);
     for (const id of ids) console.log((await client.channels.fetch(id)).name);
 
     setInterval(async () => {
@@ -39,10 +43,34 @@ client.on("ready", async () => {
     }, 1000);
 });
 
-client.on("messageCreate", async (msg) => {
-    if (!msg.guild || msg.author.bot) return;
-    if (msg.content === "-reroll" && msg.author.id === "1274838852967731224") timer = 0;
-});
+//client.on("messageCreate", async (msg) => {
+  //  if (!msg.guild || msg.author.bot) return;
+   // if (msg.content === "-reroll" && msg.author.id === "1274838852967731224") timer = 0;
+//});
+
+client.on('interactionCreate', async (interaction) => {
+    if (!interaction.isCommand()) return;
+  
+    const { commandName } = interaction;
+  
+    if (commandName === 'ping') {
+        const startTime = Date.now(); 
+        await interaction.reply({ content: '🏓 Pinging...', fetchReply: true, ephemeral: true, }); 
+        const latency = Date.now() - startTime;
+    
+        await interaction.editReply(`🏓 Pong! Latency: **${latency}ms** | WebSocket: **${client.ws.ping}ms**`);
+      } else if (interaction.commandName === "reroll") {
+        if (!allowedUsers.includes(interaction.user.id)) {
+          return await interaction.reply({ content: "❌ You are not allowed to use this command.", ephemeral: true });
+        }
+    
+        await interaction.reply("✅ Timer Rerolled!");
+        timer = 0;
+      }
+    }
+  );
 
 client.login(JSON.parse(fs.readFileSync("c")).token);
+
+
 
